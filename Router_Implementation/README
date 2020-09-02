@@ -1,0 +1,64 @@
+Mosessohn Vlad - 322CA - Tema 1 - PC
+
+Am inceput aceasta tema prin a face parsarea tabelei de rutare si a tabelei
+ARP. Am folosit tebela ARP statica. Parsarea a constat in citirea fisierelor
+linie cu linie si in despartirea liniilor in cuvinte. Am creat un vector de 
+structuri atat pentru tabela de rutare, cat si pentru tabela ARP. Dupa citire
+am completat acesti vectori de structuri cu ajutorul functiilor inet_addr(),
+hwaddr_aton() si atoi(). ---- functiile parse_arp() si parse_rtable()
+
+Functia get_best_route am luat-o din rezolvarea laboratorului 4, dar am
+adaptat-o pentru o eficienta mai buna(O(logn)). Am sortat tabela de rutare
+dupa prefix si am implementat si cautarea binara dupa prefix & masca. 
+Pentru a afla cel mai bun next_hop, am catutat binar in tabela de 
+rutare ip-ul destinatiei.
+Cautarea binara intoarce indexul unei intrari din tabela de rutare cu prefixul
+egal cu ip-ul destinatiei & masca elementului, dar exista mai multe 
+astfel de intrari. 
+Ma duc printr-un while la primul element cu prefixul egal cu dest_ip & masca.
+Dupa parcurg toate intrarile cu prefixul egal = dest_ip si returnez intrarea
+cu masca cu cei mai multi biti setati. Daca nu exista o astfel de intrare,
+returnes null. Cautarea binara se realizeaza prin functia caut_bin().
+
+Functia most_bits este un "helper" pentru functia get_best_route. Aceasta
+functie intoarce ori numarul de biti setati ai mastii, ori -1 daca
+prefixul & masca != dest_ip. Am luat-o tot din laboratorul 4.
+
+
+Functiile heapyfy si heapsort sunt pentru o sortare heapsort, cu o complexitate
+de nlogn.
+
+Functia daddr_update o folosesc in cazul in care pachetul primit nu poate
+ajunge la destinatie sau daca gazda faci un echo_reply. Functia consta in 
+interschimbarea adreselor sursa si destinatie pentru a trimite pachetul 
+inapoi la gazda.
+
+Functia set_icmp_type seteaza tipul icmp prezent deoarece am tratat in acelasi
+if ambele cazuri(timeout sau host_unreach) din cauza codului duplicat.
+
+Functia packet_interface_update gaseste cel mai bun next_hop pentru pachet
+si actualizeaza antetul ether_header adresa mac al acestuia. Dupa care seteaza
+si interfata aferenta acestuia in cadrul pachetului.
+
+In main:
+
+- parsam tabelele
+- aflam dimensiunile tabelelor
+- incepem conexiunea si while-ul
+- primesc pachetul
+- in while tratez doar cazul de pachet ip
+- in continuare am urmarit explicatiile din pdf-ul cu tema 
+- daca este un pachet destinat router-ului
+(if(iph->daddr == inet_addr(get_interface_ip(m.interface)))),
+router-ul raspunde cu un echo-reply dar dupa ce a actualizat
+ttl-ul, checksum-ul, tipul pachetului(ICMP_ECHOREPLY) si
+a interschimbat destinatia cu sursa pachetului
+- daca ttl-ul expira sau pachetulul nu poate ajunge la destinatie,
+router-ul trebuie sa trimita inapoi la gazda un pachet de instiintare
+de tipul TIMEOUT sau HOST_UNREACH. Se actualizeaza icmp checksum-ul,
+ttl-ul cu un numar oarecare > 0, seteaza tipul de protocol 1, se interschimba
+sursa cu destinatia si actualizeaza toate campurile necesare antetului de iphdr
+- in finalul while-ului verificam checksum-ul sa fie la fel cu cat era inainte
+de actualizare. Daca checksum-ul nu este acelasi "aruncam" pachetul.
+- prin ultima instructiune din while trimitem pachetul mai departe
+
